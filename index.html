@@ -1,0 +1,37 @@
+}
+  $("btnExport").addEventListener("click", () => {
+    download(sandaran-kewpa10-${today()}.json, JSON.stringify(DB, null, 2), "application/json");
+    toast("Fail sandaran dimuat turun.");
+  });
+  $("btnImport").addEventListener("click", () => $("fileImport").click());
+  $("fileImport").addEventListener("change", async e => {
+    const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      if (!d || !Array.isArray(d.records)) throw new Error("format");
+      const ids = new Set(DB.records.map(r => r.id)); let n = 0;
+      d.records.forEach(r => { if (r && r.id && !ids.has(r.id)){ DB.records.push(r); n++; } });
+      Object.entries(d.seq  {}).forEach(([y, s]) => DB.seq[y] = Math.max(DB.seq[y]  0, +s || 0));
+      persist(); renderList(); toast(${n} aduan dipulihkan daripada sandaran.);
+    } catch { toast("Fail ini bukan sandaran KEW.PA-10 yang sah."); }
+  });
+  $("btnCsv").addEventListener("click", () => {
+    const cols = [["no","No. Aduan"],["jenisAset","Jenis Aset"],["noSiri","No. Siri Pendaftaran"],["penggunaTerakhir","Pengguna Terakhir"],["tarikhRosak","Tarikh Kerosakan"],
+      ["perihal","Perihal Kerosakan"],["namaPengadu","Nama Pengadu"],["jawatanPengadu","Jawatan Pengadu"],["ext","EXT"],["tarikhAduan","Tarikh Aduan"],
+      ["kosTerdahulu","Kos Terdahulu (RM)"],["anggaranKos","Anggaran Kos (RM)"],["syor","Syor dan Ulasan"],["namaPegawai","Pegawai Aset"],["tarikhPegawai","Tarikh Semakan"],
+      ["status","Status"],["ulasanKetua","Ulasan Ketua Jabatan"],["namaKetua","Ketua Jabatan"],["tarikhKetua","Tarikh Keputusan"]];
+    const q = x => "${String(x ?? "").replace(/"/g, '""')}";
+    const lines = [cols.map(c => q(c[1])).join(",")].concat(
+      DB.records.map(r => cols.map(([k]) => q(k === "status" ? STATUS[statusOf(r)].t : /^tarikh/.test(k) ? fmtDate(r[k]) : r[k])).join(",")));
+    download(aduan-kerosakan-${today()}.csv, "\uFEFF" + lines.join("\r\n"), "text/csv");
+  });
+
+  // warn on unsaved form when leaving page
+  window.addEventListener("beforeunload", e => { if (memoryOnly && DB.records.length){ e.preventDefault(); e.returnValue = ""; } });
+
+  renderList();
+  if (memoryOnly) toast("Pelayar ini tidak membenarkan simpanan. Muat turun sandaran sebelum menutup halaman.");
+})();
+</script>
+</body>
+</html>
